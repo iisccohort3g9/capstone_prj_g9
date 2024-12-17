@@ -1,0 +1,24 @@
+# Resume Preprocessing
+textract==1.6.5
+python-magic==0.4.27  # Required by textract for file type detection
+
+
+# Fine-tuning GPT Model
+transformers
+datasets
+torch==2.1.0  # Compatible with Python 3.11
+sentencepiece==0.1.99  # For tokenizer support
+
+# Text-to-Speech
+gTTS==2.3.2  # Python 3.11 compatible version
+
+# Web App
+gradio
+
+# Utilities
+requests  # For API calls (e.g., video generation services)
+numpy<2
+# Optional: For running in Docker or production
+uvicorn  # Web server for Gradio
+
+huggingface-hub
