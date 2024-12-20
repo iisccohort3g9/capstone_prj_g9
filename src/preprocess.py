@@ -1,26 +1,36 @@
-# src/preprocess.py
-import textract
+import pandas as pd
+import re
 import os
-import json
 
-def extract_resume_sections(text):
-    """Dummy function to split resume text into structured sections."""
-    sections = {
-        "summary": text[:300],
-        "skills": text[300:600],
-        "experience": text[600:900],
-        "education": text[900:1200]
-    }
-    return sections
 
-def preprocess_resumes(input_dir, output_dir):
-    os.makedirs(output_dir, exist_ok=True)
-    for filename in os.listdir(input_dir):
-        if filename.endswith(".pdf") or filename.endswith(".docx"):
-            text = textract.process(os.path.join(input_dir, filename)).decode("utf-8")
-            structured_data = extract_resume_sections(text)
-            with open(os.path.join(output_dir, f"{filename}.json"), 'w') as f:
-                json.dump(structured_data, f)
+def clean_text(text):
+    """Remove special characters, multiple spaces, and newlines."""
+    text = re.sub(r'\n+', ' ', text)  # Remove newlines
+    text = re.sub(r'\s+', ' ', text)  # Replace multiple spaces with single space
+    text = re.sub(r'[^a-zA-Z0-9., ]', '', text)  # Remove special characters
+    return text.strip()
+
+
+def preprocess_resumes(input_csv, output_csv):
+    """Preprocess resumes from CSV file."""
+    if not os.path.exists(input_csv):
+        raise FileNotFoundError("Input file not found!")
+
+    # Load dataset
+    df = pd.read_csv(input_csv)
+
+    # Clean 'Resume' column
+    if 'Resume' in df.columns:
+        df['cleaned_resume'] = df['Resume'].apply(clean_text)
+    else:
+        raise KeyError("'Resume' column not found in dataset")
+
+    # Save cleaned data
+    df.to_csv(output_csv, index=False)
+    print(f"Preprocessed resumes saved to {output_csv}")
+
 
 if __name__ == "__main__":
-    preprocess_resumes("data/raw_resumes", "data/processed_resumes")
+    input_file = "../data/raw/resume-dataset.csv"
+    output_file = "../data/processed/resumes_cleaned.csv"
+    preprocess_resumes(input_file, output_file)
