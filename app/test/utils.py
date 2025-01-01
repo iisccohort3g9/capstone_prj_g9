@@ -11,5 +11,5 @@ def download_kaggle_dataset(dataset_name, download_path):
 
 if __name__ == "__main__":
     dataset_name = "gauravduttakiit/resume-dataset"
-    download_path = "../data/raw/"
+    download_path = "../../data/raw/"
     download_kaggle_dataset(dataset_name, download_path)

@@ -31,6 +31,6 @@ def preprocess_resumes(input_csv, output_csv):
 
 
 if __name__ == "__main__":
-    input_file = "../data/raw/resume-dataset.csv"
-    output_file = "../data/processed/resumes_cleaned.csv"
+    input_file = "../../data/raw/resume-dataset.csv"
+    output_file = "../../data/processed/resumes_cleaned.csv"
     preprocess_resumes(input_file, output_file)
