@@ -7,3 +7,4 @@ moviepy==1.0.3
 gtts==2.3.2
 matplotlib==3.8.2
 kaggle==1.5.16
+gradio
