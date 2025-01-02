@@ -2,8 +2,16 @@ openai==1.14.1
 pandas==2.1.3
 numpy==1.26.2
 transformers==4.35.2
-torch==2.1.0
+torch==2.5.1
 moviepy==1.0.3
 gtts==2.3.2
 matplotlib==3.8.2
 kaggle==1.5.16
+clearml
+PyPDF2
+python-docx
+langchain-openai
+langchain-core
+langchain
+spacy==3.6.0
+

@@ -8,11 +8,12 @@ from langchain_core.prompts import (
 
 class ResumeSummary:
 
-    def __init__(self, resume_data, logging):
+    def __init__(self, resume_data, logging, callbacks=None):
         self.logging = logging
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.llm_name = "gpt-4o-mini"
         self.resume_data = resume_data
+        self.callbacks = callbacks if callbacks else []
 
     def get_prompt(self):
         # Generate a Json Output from the LLM using Prompt Engg & LLM
@@ -28,7 +29,10 @@ class ResumeSummary:
                                           ("human",'''Here's the candidate profile mentioned- {input}''')])
 
     def generate_resume_summary(self):
-        llm = ChatOpenAI(model_name=self.llm_name, temperature=0, api_key=self.openai_api_key)
+        llm = ChatOpenAI(model_name=self.llm_name, temperature=0, api_key=self.openai_api_key, callbacks = self.callbacks)
+        # Trigger the callbacks, if provided
+        for callback in self.callbacks:
+            callback.on_start(self)
         # create chain
         chain2 = self.get_prompt() | llm | StrOutputParser()
         result = chain2.invoke({'input': self.resume_data})
@@ -43,6 +47,10 @@ class ResumeSummary:
         chain3 = prompt_json_summary | llm | StrOutputParser()
         result_summary = chain3.invoke({'json_input': result})
         self.logging.info(f"chain3 result {result_summary}")
+        callbacks.flush_tracker(langchain_asset=llm, name="summary generation")
+        # If callback handler exists, report progress or log to ClearML
+        for callback in self.callbacks:
+            callback.on_end(self)
 
         return result_summary
 
