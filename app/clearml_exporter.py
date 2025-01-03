@@ -3,7 +3,8 @@ from clearml import Task
 import time
 
 # Define Prometheus metrics
-metric_1 = Gauge('clearml_metric_example', 'Example metric from ClearML')
+metric_1 = Gauge('clearml_metric_pdf_text_extraction_time', 'PDF Text Extraction Metric-ClearML')
+metric_2 = Gauge('clearml_summary_extraction_time', 'Resume Summary Extraction Metric-ClearML')
 
 def collect_clearml_metrics():
     # Fetch a specific ClearML Task or project metrics
@@ -12,7 +13,10 @@ def collect_clearml_metrics():
 
     # Update Prometheus gauges
     pdf_processing_time = round(float(metrics.get('PDF Processing Time', 0)), 3)
+    summary_extraction_time = round(float(metrics.get('Summary Processing Time', 0)), 3)
+
     metric_1.set(pdf_processing_time)  # Replace 'metric_name' with your metric key
+    metric_2.set(summary_extraction_time)
 
 if __name__ == "__main__":
     # Start the Prometheus metrics server on port 9091

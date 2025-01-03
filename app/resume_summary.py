@@ -30,6 +30,7 @@ class ResumeSummary:
                                           ("human",'''Here's the candidate profile mentioned- {input}''')])
 
     def generate_resume_summary(self):
+        start_time = time.time()
         llm = ChatOpenAI(model_name=self.llm_name, temperature=0, api_key=self.openai_api_key, callbacks = self.callbacks)
         # Trigger the callbacks, if provided
         for callback in self.callbacks:
@@ -52,7 +53,20 @@ class ResumeSummary:
         # If callback handler exists, report progress or log to ClearML
         for callback in self.callbacks:
             callback.on_end(self)
+        end_time = time.time()
 
+        # Report processing time as a scalar metric
+        processing_time = end_time - start_time
+
+        self.logger.report_scalar(
+            title="Summary Extraction Metrics",
+            series="Summary Processing Time",
+            value=processing_time,
+            iteration=1  # You could change this to represent different steps or epochs
+        )
+
+        if self.logger:
+            self.logger.report_text(f"Summary extracted in {processing_time} seconds")
         return result_summary
 
 
