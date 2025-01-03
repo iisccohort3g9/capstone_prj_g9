@@ -1,4 +1,5 @@
 import os
+from clearml import Task, Logger
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import (
@@ -8,8 +9,8 @@ from langchain_core.prompts import (
 
 class ResumeSummary:
 
-    def __init__(self, resume_data, logging, callbacks=None):
-        self.logging = logging
+    def __init__(self, resume_data, logger, callbacks=None):
+        self.logger = logger
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.llm_name = "gpt-4o-mini"
         self.resume_data = resume_data
@@ -36,7 +37,7 @@ class ResumeSummary:
         # create chain
         chain2 = self.get_prompt() | llm | StrOutputParser()
         result = chain2.invoke({'input': self.resume_data})
-        self.logging.info(f"chain2 result {result}")
+        self.logger.report_text(f"chain2 result {result}")
 
         # Generate a 150 word summary using the result
         prompt_json_summary = ChatPromptTemplate.from_messages(
@@ -46,7 +47,7 @@ class ResumeSummary:
 
         chain3 = prompt_json_summary | llm | StrOutputParser()
         result_summary = chain3.invoke({'json_input': result})
-        self.logging.info(f"chain3 result {result_summary}")
+        self.logger.report_text(f"chain3 result {result_summary}")
         callbacks.flush_tracker(langchain_asset=llm, name="summary generation")
         # If callback handler exists, report progress or log to ClearML
         for callback in self.callbacks:
