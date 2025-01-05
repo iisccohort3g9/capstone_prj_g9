@@ -15,4 +15,13 @@ langchain-core
 langchain
 spacy==3.6.0
 prometheus_client
-
+fastapi
+uvicorn
+librosa
+opencv-contrib-python
+opencv-python
+torchvision
+tqdm
+numba
+pydantic==1.7.4
+requests

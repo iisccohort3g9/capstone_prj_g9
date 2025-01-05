@@ -1,4 +1,5 @@
 import os
+import time
 from clearml import Task, Logger
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
@@ -49,7 +50,7 @@ class ResumeSummary:
         chain3 = prompt_json_summary | llm | StrOutputParser()
         result_summary = chain3.invoke({'json_input': result})
         self.logger.report_text(f"chain3 result {result_summary}")
-        callbacks.flush_tracker(langchain_asset=llm, name="summary generation")
+        self.callbacks.flush_tracker(langchain_asset=llm, name="summary generation")
         # If callback handler exists, report progress or log to ClearML
         for callback in self.callbacks:
             callback.on_end(self)
