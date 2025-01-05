@@ -24,12 +24,12 @@ class ResumeFileReader:
         # Report processing time as a scalar metric
         processing_time = end_time - start_time
 
-        self.logger.report_scalar(
-            title="Text Extraction Metrics",
-            series="PDF Processing Time",
-            value=processing_time,
-            iteration=1  # You could change this to represent different steps or epochs
-        )
+        # self.logger.report_scalar(
+        #     title="Text Extraction Metrics",
+        #     series="PDF Processing Time",
+        #     value=processing_time,
+        #     iteration=1  # You could change this to represent different steps or epochs
+        # )
 
         if self.logger:
             self.logger.report_text(f"Text extracted in {processing_time} seconds")

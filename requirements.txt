@@ -23,5 +23,5 @@ opencv-python
 torchvision
 tqdm
 numba
-pydantic==1.7.4
+pydantic
 requests
