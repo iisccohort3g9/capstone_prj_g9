@@ -15,4 +15,5 @@ langchain-core
 langchain
 spacy==3.6.0
 prometheus_client
-
+fastapi
+uvicorn

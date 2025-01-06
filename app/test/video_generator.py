@@ -2,7 +2,7 @@ from moviepy.editor import *
 import os
 
 
-def generate_video(audio_path, output_path, background_image=None):
+    def generate_video(audio_path, output_path, background_image=None):
     """Generate video with audio and background image."""
     if background_image:
         clip = ImageClip(background_image).set_duration(AudioFileClip(audio_path).duration)
