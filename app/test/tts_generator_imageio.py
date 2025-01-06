@@ -6,12 +6,20 @@ import numpy as np  # Import numpy for array manipulation
 from PIL import Image, ImageDraw, ImageFont
 from moviepy.editor import VideoFileClip, AudioFileClip
 from rouge_score import rouge_scorer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import whisper
 
 
 def generate_audio(summary_text, output_path):
     """Convert text to speech and save as audio file."""
     tts = gTTS(summary_text)
     tts.save(output_path)
+
+def generate_segments():
+    model = whisper.load_model("small")
+    result = model.transcribe("output\summary_audio\summary_1.mp3")
+    print(result["text"])
 
 
 def process_summaries(input_csv, output_dir):
@@ -147,6 +155,19 @@ def process_summaries(input_csv, output_dir):
         with open(file_path, "r", encoding="utf-8") as file:
             return file.read().strip()
         
+    # Function to calculate ROUGE-1 scores
+    def calculate_rouge_1(reference, summary):
+        scorer = rouge_scorer.RougeScorer(['rouge1'], use_stemmer=True)
+        scores = scorer.score(reference, summary)
+        return scores['rouge1']
+
+    # Function to calculate Cosine Similarity
+    def calculate_cosine_similarity(reference, summary):
+        vectorizer = TfidfVectorizer()
+        tfidf_matrix = vectorizer.fit_transform([reference, summary])
+        cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
+        return cosine_sim[0][0]
+        
     generated_summary_path = "summary_text_0.txt"
     reference_text_path = "reference_job_text.txt"
     
@@ -158,21 +179,19 @@ def process_summaries(input_csv, output_dir):
     # print(f"Reference Summary for row {idx}: {reference_summary}")
     # print(f"Generated Summary for row {idx}: {generated_summary}")
     
-    # Initialize ROUGE scorer
-    scorer = rouge_scorer.RougeScorer(['rouge1'], use_stemmer=False)
+ 
+    # Compute ROUGE-1
+    rouge1_scores = calculate_rouge_1(reference_summary, generated_summary)
+    print(f"ROUGE-1 Scores: Precision: {rouge1_scores.precision:.4f}, Recall: {rouge1_scores.recall:.4f}, F1-Score: {rouge1_scores.fmeasure:.4f}")
     
-    # Calculate ROUGE scores
-    scores = scorer.score(reference_summary, generated_summary)
-
-    # Print the scores
-    print("ROUGE Scores:", scores)
+    # Compute Cosine Similarity
+    cosine_sim = calculate_cosine_similarity(reference_summary, generated_summary)
+    print(f"Cosine Similarity: {cosine_sim:.4f}")
     
     # Use Rouge-1 or similarity score, cosine similarity
 
         
     
-
-
 if __name__ == "__main__":
     input_file = "data/processed/resumes_with_summary.csv"
     output_directory = "output/summary_audio"
