@@ -16,25 +16,25 @@ import subprocess
 from pydub import AudioSegment
 
 # Initialize ClearML Task
-# task = Task.init(
-#     project_name="Resume Summary AV Generation",
-#     task_name="Generate Resume Summary",
-#     task_type=Task.TaskTypes.data_processing
-# )
+task = Task.init(
+    project_name="Resume Summary AV Generation",
+    task_name="Generate Resume Summary",
+    task_type=Task.TaskTypes.data_processing
+)
 # # Initialize ClearML Logger
 logger = Logger.current_logger()
 # Set up ClearML Callback Handler
-# callback_handler = ClearMLCallbackHandler(
-#     task_type="inference",
-#     project_name="Resume Summary AV Generation",
-#     task_name="Generate Resume Summary",
-#     tags=["test"],
-#     # Change the following parameters based on the amount of detail you want tracked
-#     visualize=True,
-#     complexity_metrics=False,
-#     stream_logs=True
-# )
-# callbacks = (StdOutCallbackHandler(), callback_handler)
+callback_handler = ClearMLCallbackHandler(
+     task_type="inference",
+     project_name="Resume Summary AV Generation",
+     task_name="Generate Resume Summary",
+     tags=["test"],
+     # Change the following parameters based on the amount of detail you want tracked
+     visualize=True,
+     complexity_metrics=False,
+     stream_logs=True
+)
+callbacks = (StdOutCallbackHandler(), callback_handler)
 
 app = FastAPI(debug=True)
 app.add_middleware(
@@ -60,8 +60,8 @@ async def generate_video(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="File must be a .docx or .pdf")
 
     # Connect parameters to task
-    # parameters = {"resume_file": file}
-    # task.connect(parameters)
+    parameters = {"resume_file": file}
+    task.connect(parameters)
     with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as temp_file:
         # Save the file content to the temp file
         content = await file.read()  # Read the content of the file
@@ -70,12 +70,12 @@ async def generate_video(file: UploadFile = File(...)):
         temp_file_path = temp_file.name  # Get the file path for further processing
         print(f"Temporary file saved at {temp_file_path}")
 
-    rfr = ResumeFileReader(temp_file_path)
+    rfr = ResumeFileReader(temp_file_path,logger)
     resume_data = rfr.extract_text_from_file()
     print(resume_data)
-    # rfs = ResumeSummary(resume_data, logger)
-    # summary_text = rfs.generate_resume_summary()
-    summary_text = """Highly skilled AI Engineer with a strong foundation in machine learning, deep learning, and natural language processing. Over 5 years of experience designing, developing, and deploying AI models for various applications, including computer vision, speech recognition, and predictive analytics. Proficient in Python, TensorFlow, PyTorch, and other AI/ML frameworks, with hands-on expertise in building scalable solutions and optimizing model performance. Strong understanding of algorithms, data structures, and big data technologies, with a focus on creating efficient, production-ready systems. Experienced in working with cloud platforms like AWS, Google Cloud, and Azure for deploying AI models at scale. Passionate about leveraging cutting-edge AI technologies to solve complex problems, drive business innovation, and enhance user experiences. Excellent communication and collaboration skills, with a proven track record of working in agile teams to deliver impactful AI-driven solutions on time."""
+    rfs = ResumeSummary(resume_data, logger)
+    summary_text = rfs.generate_resume_summary()
+    #summary_text = """Highly skilled AI Engineer with a strong foundation in machine learning, deep learning, and natural language processing. Over 5 years of experience designing, developing, and deploying AI models for various applications, including computer vision, speech recognition, and predictive analytics. Proficient in Python, TensorFlow, PyTorch, and other AI/ML frameworks, with hands-on expertise in building scalable solutions and optimizing model performance. Strong understanding of algorithms, data structures, and big data technologies, with a focus on creating efficient, production-ready systems. Experienced in working with cloud platforms like AWS, Google Cloud, and Azure for deploying AI models at scale. Passionate about leveraging cutting-edge AI technologies to solve complex problems, drive business innovation, and enhance user experiences. Excellent communication and collaboration skills, with a proven track record of working in agile teams to deliver impactful AI-driven solutions on time."""
     print("Generating summary:", summary_text)
     # Generate TTS audio in memory
     tts = GenerateTTS(logger)

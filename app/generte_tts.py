@@ -45,7 +45,7 @@ class GenerateTTS:
 
         # Seek to the beginning of the stream for further processing
         audio_stream.seek(0)
-        self.logging.info("MP3 audio is now available in-memory.")
+        self.logging.report_text("MP3 audio is now available in-memory.")
         return audio_stream
 
     def convert_mp3_to_wav_in_memory(self,mp3_stream: BytesIO) -> BytesIO:
@@ -65,5 +65,5 @@ class GenerateTTS:
         wav_stream = BytesIO()
         audio.export(wav_stream, format="wav")
         wav_stream.seek(0)
-        self.logging.info("MP3 audio has been converted to WAV format in-memory.")
+        self.logging.report_text("MP3 audio has been converted to WAV format in-memory.")
         return wav_stream

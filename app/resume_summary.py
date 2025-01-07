@@ -1,11 +1,11 @@
 import os
+import time
 from clearml import Task, Logger
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import (
     ChatPromptTemplate
 )
-
 
 class ResumeSummary:
 
@@ -14,6 +14,7 @@ class ResumeSummary:
         self.openai_api_key = os.getenv("OPENAI_API_KEY")
         self.llm_name = "gpt-4o-mini"
         self.resume_data = resume_data
+
         self.callbacks = callbacks if callbacks else []
 
     def get_prompt(self):
@@ -31,12 +32,13 @@ class ResumeSummary:
 
     def generate_resume_summary(self):
         start_time = time.time()
-        llm = ChatOpenAI(model_name=self.llm_name, temperature=0, api_key=self.openai_api_key, callbacks = self.callbacks)
+
+        llm = ChatOpenAI(model_name=self.llm_name, temperature=0, api_key=self.openai_api_key)
         # Trigger the callbacks, if provided
-        for callback in self.callbacks:
-            callback.on_start(self)
+        #for callback in self.callbacks:
+        #    callback.on_start(self)
         # create chain
-        chain2 = self.get_prompt() | llm | StrOutputParser()
+        chain2 =  self.get_prompt() | llm | StrOutputParser()
         result = chain2.invoke({'input': self.resume_data})
         self.logger.report_text(f"chain2 result {result}")
 
@@ -49,10 +51,10 @@ class ResumeSummary:
         chain3 = prompt_json_summary | llm | StrOutputParser()
         result_summary = chain3.invoke({'json_input': result})
         self.logger.report_text(f"chain3 result {result_summary}")
-        callbacks.flush_tracker(langchain_asset=llm, name="summary generation")
+        #self.callbacks.flush_tracker(langchain_asset=llm, name="summary generation")
         # If callback handler exists, report progress or log to ClearML
-        for callback in self.callbacks:
-            callback.on_end(self)
+        #for callback in self.callbacks:
+        #    callback.on_end(self)
         end_time = time.time()
 
         # Report processing time as a scalar metric
