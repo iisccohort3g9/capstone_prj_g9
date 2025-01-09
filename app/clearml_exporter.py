@@ -8,7 +8,7 @@ metric_2 = Gauge('clearml_summary_extraction_time', 'Resume Summary Extraction M
 
 def collect_clearml_metrics():
     # Fetch a specific ClearML Task or project metrics
-    task = Task.get_task(task_id='05e080a46d254f1f8640e45f19258158')  # Replace with your Task ID
+    task = Task.get_task(task_id='463c0fafd1734be68f927a095ef4a74c')  # Replace with your Task ID
     metrics = task.get_last_scalar_metrics()
 
     # Update Prometheus gauges

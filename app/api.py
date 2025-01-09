@@ -12,6 +12,7 @@ from langchain_core.callbacks import StdOutCallbackHandler
 from generte_tts import GenerateTTS
 from resume_file_reader import ResumeFileReader
 from resume_summary import ResumeSummary
+from cv_similarity import CVSimilarity
 import subprocess
 from pydub import AudioSegment
 
@@ -54,7 +55,7 @@ def is_valid_file(file: UploadFile) -> bool:
 
 
 @app.post('/generate-video')
-async def generate_video(file: UploadFile = File(...)):
+async def generate_video(file: UploadFile,jd_text):
     # Check if the file is .docx or .pdf
     if not is_valid_file(file):
         raise HTTPException(status_code=400, detail="File must be a .docx or .pdf")
@@ -75,6 +76,10 @@ async def generate_video(file: UploadFile = File(...)):
     print(resume_data)
     rfs = ResumeSummary(resume_data, logger)
     summary_text = rfs.generate_resume_summary()
+
+    # generating cv_similarity
+    cv_similarity = CVSimilarity(summary_text,logger,jd_text)
+    jd_similarity = cv_similarity.calculate_similarity()
     #summary_text = """Highly skilled AI Engineer with a strong foundation in machine learning, deep learning, and natural language processing. Over 5 years of experience designing, developing, and deploying AI models for various applications, including computer vision, speech recognition, and predictive analytics. Proficient in Python, TensorFlow, PyTorch, and other AI/ML frameworks, with hands-on expertise in building scalable solutions and optimizing model performance. Strong understanding of algorithms, data structures, and big data technologies, with a focus on creating efficient, production-ready systems. Experienced in working with cloud platforms like AWS, Google Cloud, and Azure for deploying AI models at scale. Passionate about leveraging cutting-edge AI technologies to solve complex problems, drive business innovation, and enhance user experiences. Excellent communication and collaboration skills, with a proven track record of working in agile teams to deliver impactful AI-driven solutions on time."""
     print("Generating summary:", summary_text)
     # Generate TTS audio in memory
@@ -111,7 +116,10 @@ async def generate_video(file: UploadFile = File(...)):
     # Return video content as streaming response using io.BytesIO
     video_stream = io.BytesIO(video_content)
     video_stream.seek(0)  # Ensure the pointer is at the start of the file
-    return StreamingResponse(video_stream, media_type="video/mp4")
+    output_data = {"stream" : StreamingResponse(video_stream, media_type="video/mp4"),
+                   "jd_similarity" : jd_similarity,
+                   "summary_text" : summary_text}
+    return output_data
 
 
 if __name__ == "__main__":
