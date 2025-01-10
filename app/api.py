@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import tempfile
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import io
@@ -26,14 +26,14 @@ task = Task.init(
 logger = Logger.current_logger()
 # Set up ClearML Callback Handler
 callback_handler = ClearMLCallbackHandler(
-     task_type="inference",
-     project_name="Resume Summary AV Generation",
-     task_name="Generate Resume Summary",
-     tags=["test"],
-     # Change the following parameters based on the amount of detail you want tracked
-     visualize=True,
-     complexity_metrics=False,
-     stream_logs=True
+    task_type="inference",
+    project_name="Resume Summary AV Generation",
+    task_name="Generate Resume Summary",
+    tags=["test"],
+    # Change the following parameters based on the amount of detail you want tracked
+    visualize=True,
+    complexity_metrics=False,
+    stream_logs=True
 )
 callbacks = (StdOutCallbackHandler(), callback_handler)
 
@@ -55,7 +55,7 @@ def is_valid_file(file: UploadFile) -> bool:
 
 
 @app.post('/generate-video')
-async def generate_video(file: UploadFile,jd_text):
+async def generate_video(file: UploadFile, job_description: str = Form(...)):
     # Check if the file is .docx or .pdf
     if not is_valid_file(file):
         raise HTTPException(status_code=400, detail="File must be a .docx or .pdf")
@@ -71,16 +71,16 @@ async def generate_video(file: UploadFile,jd_text):
         temp_file_path = temp_file.name  # Get the file path for further processing
         print(f"Temporary file saved at {temp_file_path}")
 
-    rfr = ResumeFileReader(temp_file_path,logger)
+    rfr = ResumeFileReader(temp_file_path, logger)
     resume_data = rfr.extract_text_from_file()
     print(resume_data)
     rfs = ResumeSummary(resume_data, logger)
     summary_text = rfs.generate_resume_summary()
 
     # generating cv_similarity
-    cv_similarity = CVSimilarity(summary_text,logger,jd_text)
+    cv_similarity = CVSimilarity(summary_text, logger, job_description)
     jd_similarity = cv_similarity.calculate_similarity()
-    #summary_text = """Highly skilled AI Engineer with a strong foundation in machine learning, deep learning, and natural language processing. Over 5 years of experience designing, developing, and deploying AI models for various applications, including computer vision, speech recognition, and predictive analytics. Proficient in Python, TensorFlow, PyTorch, and other AI/ML frameworks, with hands-on expertise in building scalable solutions and optimizing model performance. Strong understanding of algorithms, data structures, and big data technologies, with a focus on creating efficient, production-ready systems. Experienced in working with cloud platforms like AWS, Google Cloud, and Azure for deploying AI models at scale. Passionate about leveraging cutting-edge AI technologies to solve complex problems, drive business innovation, and enhance user experiences. Excellent communication and collaboration skills, with a proven track record of working in agile teams to deliver impactful AI-driven solutions on time."""
+    # summary_text = """Highly skilled AI Engineer with a strong foundation in machine learning, deep learning, and natural language processing. Over 5 years of experience designing, developing, and deploying AI models for various applications, including computer vision, speech recognition, and predictive analytics. Proficient in Python, TensorFlow, PyTorch, and other AI/ML frameworks, with hands-on expertise in building scalable solutions and optimizing model performance. Strong understanding of algorithms, data structures, and big data technologies, with a focus on creating efficient, production-ready systems. Experienced in working with cloud platforms like AWS, Google Cloud, and Azure for deploying AI models at scale. Passionate about leveraging cutting-edge AI technologies to solve complex problems, drive business innovation, and enhance user experiences. Excellent communication and collaboration skills, with a proven track record of working in agile teams to deliver impactful AI-driven solutions on time."""
     print("Generating summary:", summary_text)
     # Generate TTS audio in memory
     tts = GenerateTTS(logger)
@@ -102,24 +102,35 @@ async def generate_video(file: UploadFile,jd_text):
     print(result.stderr)
     for line in result.stdout.splitlines():
         if "Output video file saved to" in line:
-            output_file_path = line.split(":")[-1].strip()
-            print(f"Video file saved to: {output_file_path}")
-    # Read the video file into binary
-    with open(output_file_path, "rb") as video_file:
-        video_content = video_file.read()
+            output_file = os.path.basename(line.split(":")[-1].strip())
+            print(f"Video file saved to: {output_file}")
 
     # Ensure temporary files are cleaned up
     os.remove(temp_file_path)
     os.remove(audio_file_path)
-    os.remove(output_file_path)
 
-    # Return video content as streaming response using io.BytesIO
-    video_stream = io.BytesIO(video_content)
-    video_stream.seek(0)  # Ensure the pointer is at the start of the file
-    output_data = {"stream" : StreamingResponse(video_stream, media_type="video/mp4"),
-                   "jd_similarity" : jd_similarity,
-                   "summary_text" : summary_text}
-    return output_data
+    return {
+        "video_url": output_file,
+        "jd_similarity": jd_similarity,
+        "summary_text": summary_text
+    }
+
+
+@app.get('/video/{video_file_name}')
+async def get_video(video_file_name: str):
+    video_path = os.path.join(tempfile.gettempdir(), video_file_name)
+
+    if os.path.exists(video_path):
+        with open(video_path, "rb") as video_file:
+            video_content = video_file.read()
+
+        os.remove(os.path.join(tempfile.gettempdir(), video_file_name))
+        # Return video content as streaming response using io.BytesIO
+        video_stream = io.BytesIO(video_content)
+        video_stream.seek(0)  # Ensure the pointer is at the start of the file
+        return StreamingResponse(video_stream, media_type="video/mp4")
+    else:
+        raise HTTPException(status_code=404, detail="Video file not found.")
 
 
 if __name__ == "__main__":
