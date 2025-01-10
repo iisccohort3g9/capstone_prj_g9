@@ -1,40 +1,35 @@
 # pull python base image
 FROM python:3.10
 
-RUN apt-get -y update
-RUN apt-get -y upgrade
-RUN apt-get install -y ffmpeg
-
-ADD requirements.txt requirements.txt
-
-# update pip
-RUN pip install --upgrade pip
-
-# install dependencies
-RUN pip install -r requirements.txt
+RUN apt-get update && apt-get install -y ffmpeg
 
 
 # copy application files
 COPY app/. app/.
-
-RUN python -m spacy download en_core_web_sm
 COPY input_video.mp4 input_video.mp4
 COPY front-end/. front-end/.
-
-
+ADD requirements.txt requirements.txt
+ADD clearml.conf /root/clearml.conf
 RUN git clone https://github.com/iisccohort3g9/Wav2Lip.git
 
-# Move the cloned repository to the desired directory
-RUN mv Wav2Lip app/Wav2Lip
+# update pip
+RUN pip install --upgrade pip
+# install dependencies
+RUN pip install -r requirements.txt
+RUN pip install -r Wav2Lip/requirements.txt
+# RUN chmod +x /app/install_models.sh
+RUN python -m spacy download en_core_web_sm
+RUN mkdir -p /tmp/gradio
+RUN chmod -R 777 /tmp/gradio
 
-RUN pip install -r app/Wav2Lip/requirements.txt
+
+# Environmrnt values
+
 
 # expose port for application
-EXPOSE 8001
-EXPOSE 8080
+EXPOSE 8000
 EXPOSE 7860
-EXPOSE 9091
 
 
 # start fastapi application
-CMD ["python", "app/api.py", ";", "python", "front-end/app.py", ";", "python", "app/clearml_exporter.py"]
+CMD ["sh", "-c", "python app/api.py & python front-end/app.py"]
