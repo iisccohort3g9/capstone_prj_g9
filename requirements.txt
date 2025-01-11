@@ -29,3 +29,4 @@ uvicorn
 gradio
 pydub
 elevenlabs
+langchain_community

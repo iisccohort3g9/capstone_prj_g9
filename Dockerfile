@@ -10,7 +10,8 @@ COPY input_video.mp4 input_video.mp4
 COPY front-end/. front-end/.
 ADD requirements.txt requirements.txt
 ADD clearml.conf /root/clearml.conf
-RUN git clone https://github.com/iisccohort3g9/Wav2Lip.git
+# RUN git clone https://github.com/iisccohort3g9/Wav2Lip.git
+COPY Wav2Lip/. Wav2Lip/.
 
 # update pip
 RUN pip install --upgrade pip
